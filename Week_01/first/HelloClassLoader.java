@@ -35,15 +35,27 @@ public class HelloClassLoader extends ClassLoader {
 
     @Override
     protected Class<?> findClass(String name) throws ClassNotFoundException {
-        File file = new File(FILE_NAME);
+        byte[] srcBytes = loaderFile2Bytes(FILE_NAME);
+        if (null == srcBytes) {
+            throw new ClassNotFoundException("not found " + FILE_NAME + "or the file format is incorrect");
+        }
+
+        //通过255-x解码byte数组
+        byte[] desDecode = decodeByte(srcBytes);
+
+        return defineClass(name, desDecode, 0, desDecode.length);
+    }
+
+    private byte[] loaderFile2Bytes(String fileName){
+        File file = new File(fileName);
         InputStream in = null;
-        byte[] srcBytes = null;
+        byte[] bytes = null;
 
         //读取hello.xlass文件到srcBytes数组中
         try {
             in = new FileInputStream(file);
-            srcBytes = new byte[in.available()];
-            in.read(srcBytes);
+            bytes = new byte[in.available()];
+            in.read(bytes);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -58,14 +70,7 @@ public class HelloClassLoader extends ClassLoader {
             }
         }
 
-        if (null == srcBytes) {
-            throw new ClassNotFoundException();
-        }
-
-        //通过255-x解码byte数组
-        byte[] bytesDecode = decodeByte(srcBytes);
-
-        return defineClass(name, bytesDecode, 0, bytesDecode.length);
+        return bytes;
     }
 
     private byte[] decodeByte(byte[] srcBytes) {
